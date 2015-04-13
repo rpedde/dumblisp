@@ -1,3 +1,4 @@
+import inspect
 import sys
 import numbers
 from functools import wraps
@@ -54,10 +55,22 @@ class List(Lispval):
 
 
 def unboxedfn(fn):
+    needs_env = False
+    try:
+        fn_args = inspect.getargspec(fn)
+        if fn_args[0] and in 'env' in fn_args[0]:
+            needs_env = True
+    except TypeError:
+        # build-in or c function
+        pass
+
     @wraps(fn)
-    def wrapped(*args):
+    def wrapped(*args, **kwargs):
         args = unbox(args)
-        retval = fn(*args)
+        if needs_env:
+            retval = fn(*args, env=kwargs['env'])
+        else:
+            retval = fn(*args)
         return box(retval)
 
     return wrapped

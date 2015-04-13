@@ -40,6 +40,8 @@ def standard_environment():
         # 'symbol?': lambda x: isinstance(x, types.Symbol)
     })
 
+    env['thing'] = thing
+    
     env = {k: types.unboxedfn(v) for k, v in env.iteritems()}
 
     env['pi'] = types.box(math.pi)
@@ -74,4 +76,4 @@ def eval(expr, env=global_env):
     else:
         fn = eval(expr.value[0], env)
         args = [eval(arg, env) for arg in expr.value[1:]]
-        return fn(*args)
+        return fn(*args, env=env)

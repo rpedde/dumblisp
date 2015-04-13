@@ -4,7 +4,6 @@ from emlisp import environment, parser
 
 LOGGER = logging.getLogger('emlisp.repl')
 
-
 def repl(prompt='emlisp> '):
     env = environment.standard_environment()
 
@@ -27,4 +26,5 @@ def repl(prompt='emlisp> '):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.ERROR)
     repl()
