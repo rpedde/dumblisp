@@ -1,11 +1,11 @@
 import logging
-from dumblisp import environment, parser
+from emlisp import environment, parser
 
 
-LOGGER = logging.getLogger('dumblisp.repl')
+LOGGER = logging.getLogger('emlisp.repl')
 
 
-def repl(prompt='dumblisp> '):
+def repl(prompt='emlisp> '):
     env = environment.standard_environment()
 
     while True:

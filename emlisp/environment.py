@@ -2,7 +2,7 @@ import numbers
 import math
 import operator as op
 
-from dumblisp import types
+from emlisp import types
 
 
 def standard_environment():

@@ -1,5 +1,5 @@
 import logging
 
-logger = logging.getLogger('dumblisp')
+logger = logging.getLogger('emlisp')
 logger.addHandler(logging.NullHandler())
 

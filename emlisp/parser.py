@@ -1,4 +1,4 @@
-from dumblisp import types
+from emlisp import types
 
 
 def parse(program):
