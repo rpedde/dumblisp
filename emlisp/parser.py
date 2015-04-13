@@ -12,12 +12,14 @@ def read_from_tokens(tokens):
     token = tokens.pop(0)
     if token == '(':
         L = []
-        while tokens[0] != ')':
+        while tokens and tokens[0] != ')':
             L.append(read_from_tokens(tokens))
+        if not tokens:
+            raise SyntaxError('Missing ")"')
         tokens.pop(0)
         return types.List(L)
     elif token == ')':
-        raise SyntaxError('Unexpected )')
+        raise SyntaxError('Unexpected ")"')
     else:
         return types.atomize(token)
 
