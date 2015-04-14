@@ -13,10 +13,9 @@ quotes = {"'": types.Symbol('quote'),
 
 def readchar(inport):
     if inport.line != '':
-        ch, inport.line = inport.line[0], inport.line[1:]
-        return ch
-    else:
-        return inport.value.read(1) or types.eof_object
+        inport.read_line()
+    ch, inport.line = inport.line[0], inport.line[1:]
+    return ch
 
 
 def read(inport):
@@ -37,7 +36,11 @@ def read(inport):
             raise SyntaxError('Unexpected EOF in list')
         else:
             return types.atomize(token)
+
+    inport.continuation = False
     token1 = inport.next_token()
+    inport.continuation = True
+
     if token1 is types.eof_object:
         return types.eof_object
     return read_ahead(token1)
@@ -47,16 +50,16 @@ def load(filename, env=None):
     repl.repl(None, env, types.Inport(sys.stdin), None)
 
 
-def repl(prompt='emlisp> ', env=None, inport=types.InPort(sys.stdin),
-         out=sys.stdout):
+def repl(prompt='emlisp> ', env=None, inport=None, out=sys.stdout):
     if env is None:
         env = environment.standard_environment()
+
+    if inport is None:
+        inport = types.InPort(None, prompt=prompt)
 
     while True:
         try:
             val = None
-            if prompt:
-                sys.stderr.write(prompt)
 
             x = read(inport)
             if x is types.eof_object:
@@ -72,7 +75,6 @@ def repl(prompt='emlisp> ', env=None, inport=types.InPort(sys.stdin),
         except Exception as e:
             LOGGER.exception(e)
             print '%s: %s' % (type(e).__name__, e)
-            sys.exit(1)
 
 
 if __name__ == '__main__':

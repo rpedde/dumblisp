@@ -1,6 +1,7 @@
 import inspect
 import re
 import numbers
+import readline
 from functools import wraps
 
 
@@ -61,17 +62,35 @@ class List(Lispval):
 class InPort(Lispval):
     matcher = r'''\s*(,@|[('`,)]|"(?:[\\].|[^\\"])*"|;.*|[^\s('"`,;)]*)(.*)'''
 
-    def __init__(self, value):
+    def __init__(self, value, prompt='emlisp>'):
         self.value = value
         self.line = ''
+        self.prompt = prompt
+        self.continuation = False
 
     def display(self):
-        return 'Port: %s' % self.value
+        if self.value is None:
+            return 'Port: readline'
+        else:
+            return 'Port: %s' % self.value
+
+    def read_line(self):
+        if self.value is None:
+            try:
+                if self.continuation is False:
+                    self.line = raw_input(self.prompt)
+                else:
+                    self.line = raw_input(self.prompt.replace('>', '-'))
+
+            except EOFError:
+                self.line = ''
+        else:
+            self.line = self.value.readline()
 
     def next_token(self):
         while True:
             if self.line == '':
-                self.line = self.value.readline()
+                self.read_line()
             if self.line == '':
                 return eof_object
             token, self.line = re.match(InPort.matcher, self.line).groups()
