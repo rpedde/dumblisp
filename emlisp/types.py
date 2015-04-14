@@ -1,5 +1,5 @@
 import inspect
-import sys
+import re
 import numbers
 from functools import wraps
 
@@ -56,6 +56,27 @@ class List(Lispval):
 
     def write(self):
         return '(%s)' % ' '.join([x.write() for x in self.value])
+
+
+class InPort(Lispval):
+    matcher = r'''\s*(,@|[('`,)]|"(?:[\\].|[^\\"])*"|;.*|[^\s('"`,;)]*)(.*)'''
+
+    def __init__(self, value):
+        self.value = value
+        self.line = ''
+
+    def display(self):
+        return 'Port: %s' % self.value
+
+    def next_token(self):
+        while True:
+            if self.line == '':
+                self.line = self.value.readline()
+            if self.line == '':
+                return eof_object
+            token, self.line = re.match(InPort.matcher, self.line).groups()
+            if token != '' and not token.startswith(';'):
+                return token
 
 
 def unboxedfn(fn):
@@ -139,6 +160,11 @@ def atomize(value):
         return Bool(False)
 
     if value[0] == '"' and value[-1] == '"':
-        return String(value[1:-1])
+        return String(value[1:-1].decode('string_escape'))
     else:
         return Symbol(value)
+
+eof_object = Symbol('#eof')
+true_object = Bool(True)
+false_object = Bool(False)
+nil_object = Nil(None)

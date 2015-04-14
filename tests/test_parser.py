@@ -1,6 +1,8 @@
 import unittest
+import StringIO
 
 from emlisp import types, parser
+
 
 class ParserTest(unittest.TestCase):
     def test_box(self):
@@ -40,15 +42,15 @@ class ParserTest(unittest.TestCase):
         result = test_fn(val)
 
         assert isinstance(result, types.Bool)
-        assert result.value == True
+        assert result.value is True
 
     def test_atomize(self):
         assert isinstance(types.atomize('3'), types.Numeric)
         assert types.atomize('3').value == 3
         assert isinstance(types.atomize('#t'), types.Bool)
         assert isinstance(types.atomize('#f'), types.Bool)
-        assert types.atomize('#t').value == True
-        assert types.atomize('#f').value == False
+        assert types.atomize('#t').value is True
+        assert types.atomize('#f').value is False
         assert isinstance(types.atomize('2.0'), types.Numeric)
         assert types.atomize('2.0').value == 2.0
         assert isinstance(types.atomize('"x"'), types.String)
@@ -57,7 +59,7 @@ class ParserTest(unittest.TestCase):
         assert types.atomize('x').value == 'x'
 
     def test_symbol_eval(self):
-        env = { 'x': types.box(3) }
+        env = {'x': types.box(3)}
         symbol = types.atomize("x")
 
         res = symbol.eval(env)
@@ -66,21 +68,24 @@ class ParserTest(unittest.TestCase):
 
     # enough types, now test parser
     def test_parser(self):
-        res = parser.parse('3')
+        def fileio(buffer):
+            return types.InPort(StringIO.StringIO(buffer))
+
+        res = parser.read(fileio('3'))
         assert isinstance(res, types.Numeric)
         assert res.value == 3
 
-        res = parser.parse('(quote (1 2 3))')
+        res = parser.read(fileio('(quote (1 2 3))'))
         assert isinstance(res, types.List)
         assert len(res.value) == 2
         assert isinstance(res.value[0], types.Symbol)
         assert isinstance(res.value[1], types.List)
 
         with self.assertRaises(SyntaxError):
-            parser.parse('(quote')
+            parser.read(fileio('(quote'))
+
+        res = parser.read(fileio(''))
+        assert res is types.eof_object
 
         with self.assertRaises(SyntaxError):
-            parser.parse('')
-
-        with self.assertRaises(SyntaxError):
-            parser.parse(')')
+            parser.read(fileio(')'))
