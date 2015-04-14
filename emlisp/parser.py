@@ -67,13 +67,12 @@ def repl(prompt='emlisp> ', env=None, inport=None, out=sys.stdout):
                     print >> out, '\n'
                 return
 
-            val = environment.eval(x, env)
+            val = types.eval(x, env)
 
-            if val is not None and out:
+            if val is not types.nil_object and out:
                 print >> out, val.display()
 
         except Exception as e:
-            LOGGER.exception(e)
             print '%s: %s' % (type(e).__name__, e)
 
 

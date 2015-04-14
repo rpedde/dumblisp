@@ -2,7 +2,31 @@ import inspect
 import re
 import numbers
 import readline
+
 from functools import wraps
+
+
+class Env(dict):
+    def __init__(self, parms=None, args=None, outer=None):
+        self.outer = outer
+        if isinstance(parms, Symbol):
+            self.update({parms.value: args})
+        else:
+            if parms or args:
+                if not (parms and args) or (len(parms.value) != len(args.value)):
+                    raise TypeError('expected %s, given %s' % (
+                        parms.display(), args.display()))
+                adds = zip([x.value for x in parms.value],
+                           [x for x in args.value])
+                self.update(adds)
+
+    def find(self, var):
+        if var in self:
+            return self
+        elif self.outer is None:
+            raise LookupError(var)
+        else:
+            return self.outer.find(var)
 
 
 class Lispval(object):
@@ -41,10 +65,7 @@ class String(Lispval):
 
 class Symbol(Lispval):
     def eval(self, env):
-        if self.value in env:
-            return env[self.value]
-        else:
-            raise SyntaxError('Unknown symbol: "%s"' % self.value)
+        return env.find(self.value)[self.value]
 
 
 class Nil(Lispval):
@@ -57,6 +78,19 @@ class List(Lispval):
 
     def write(self):
         return '(%s)' % ' '.join([x.write() for x in self.value])
+
+
+class Lambda(Lispval):
+    def __init__(self, parms, exp, env):
+        self.parms = parms
+        self.exp = exp
+        self.env = env
+
+    def write(self):
+        return '<lambda: %s>' % id(self)
+
+    def __call__(self, *args, **kwargs):
+        return eval(self.exp, Env(self.parms, List(args), self.env))
 
 
 class InPort(Lispval):
@@ -182,6 +216,43 @@ def atomize(value):
         return String(value[1:-1].decode('string_escape'))
     else:
         return Symbol(value)
+
+
+def is_sym(var, what):
+    return isinstance(var, Symbol) and var.value == what
+
+
+def eval(expr, env):
+    if not isinstance(expr, List):
+        return expr.eval(env)
+    if is_sym(expr.value[0], 'quote'):
+        (_, exp) = expr.value
+        return exp
+    if is_sym(expr.value[0], 'if'):
+        (_, test, conseq, otherwise) = expr.value
+        exp = (conseq if eval(test, env) else otherwise)
+        return eval(exp, env)
+    if is_sym(expr.value[0], 'set!'):
+        (_, var, exp) = expr.value
+        if not isinstance(var, Symbol):
+            raise SyntaxError('Not a symbol: "%s"' % var)
+        env.find(var.value)[var.value] = eval(exp, env)
+        return nil_object
+    if is_sym(expr.value[0], 'define'):
+        (_, var, exp) = expr.value
+        if not isinstance(var, Symbol):
+            raise SyntaxError('Not a symbol: "%s"' % var)
+        env[var.value] = eval(exp, env)
+        return nil_object
+    if is_sym(expr.value[0], 'lambda'):
+        (_, vars, exp) = expr.value
+        return Lambda(vars, exp, env)
+        return nil_object
+    else:
+        args = [eval(arg, env) for arg in expr.value]
+        fn = args.pop(0)
+        return fn(*args, env=env)
+
 
 eof_object = Symbol('#eof')
 true_object = Bool(True)

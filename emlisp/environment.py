@@ -6,7 +6,7 @@ from emlisp import types
 
 
 def standard_environment():
-    env = dict()
+    env = {}
     env.update({k: v for k, v in vars(math).iteritems() if callable(v)})
     env.update({
         '+': op.add,
@@ -45,33 +45,9 @@ def standard_environment():
     env['pi'] = types.box(math.pi)
     env['e'] = types.box(math.e)
 
-    return env
+    retval = types.Env()
+    retval.update(env)
+    return retval
 
 
 global_env = standard_environment()
-
-
-def is_sym(var, what):
-    return isinstance(var, types.Symbol) and var.value == what
-
-
-def eval(expr, env=global_env):
-    if not isinstance(expr, types.List):
-        return expr.eval(env)
-    if is_sym(expr.value[0], 'quote'):
-        (_, exp) = expr.value
-        return exp
-    if is_sym(expr.value[0], 'if'):
-        (_, test, conseq, otherwise) = expr.value
-        exp = (conseq if eval(test, env) else otherwise)
-        return eval(exp, env)
-    if is_sym(expr.value[0], 'define'):
-        (_, var, exp) = expr.value
-        if not isinstance(var, types.Symbol):
-            raise SyntaxError('Not a symbol: "%s"' % var)
-        env[var.value] = eval(exp, env)
-        return None
-    else:
-        fn = eval(expr.value[0], env)
-        args = [eval(arg, env) for arg in expr.value[1:]]
-        return fn(*args, env=env)
