@@ -46,6 +46,10 @@ class Symbol(Lispval):
             raise SyntaxError('Unknown symbol: "%s"' % self.value)
 
 
+class Nil(Lispval):
+    pass
+
+
 class List(Lispval):
     def display(self):
         return '(%s)' % ' '.join([x.display() for x in self.value])
@@ -58,7 +62,7 @@ def unboxedfn(fn):
     needs_env = False
     try:
         fn_args = inspect.getargspec(fn)
-        if fn_args[0] and in 'env' in fn_args[0]:
+        if fn_args[0] and 'env' in fn_args[0]:
             needs_env = True
     except TypeError:
         # build-in or c function
@@ -83,6 +87,9 @@ def unbox(value):
        isinstance(value, String):
         return value.value
 
+    if isinstance(value, Nil):
+        return None
+
     if isinstance(value, List):
         return [unbox(x) for x in value.value]
 
@@ -90,6 +97,13 @@ def unbox(value):
         return [unbox(x) for x in value]
 
     raise SyntaxError('Cannot unbox type "%s"' % value.__class__.__name__)
+
+
+def unboxenv(env, key):
+    if env.get(key) is None:
+        return Nil()
+
+    return env.get(key).value
 
 
 def box(value):

@@ -40,8 +40,6 @@ def standard_environment():
         # 'symbol?': lambda x: isinstance(x, types.Symbol)
     })
 
-    env['thing'] = thing
-    
     env = {k: types.unboxedfn(v) for k, v in env.iteritems()}
 
     env['pi'] = types.box(math.pi)

@@ -4,8 +4,10 @@ from emlisp import environment, parser
 
 LOGGER = logging.getLogger('emlisp.repl')
 
-def repl(prompt='emlisp> '):
-    env = environment.standard_environment()
+
+def repl(prompt='emlisp> ', env=None):
+    if env is None:
+        env = environment.standard_environment()
 
     while True:
         val = None
