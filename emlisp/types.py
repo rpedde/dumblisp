@@ -69,7 +69,8 @@ class Symbol(Lispval):
 
 
 class Nil(Lispval):
-    pass
+    def display(self):
+        return '()'
 
 
 class List(Lispval):
@@ -96,8 +97,8 @@ class Lambda(Lispval):
 class InPort(Lispval):
     matcher = r'''\s*(,@|[('`,)]|"(?:[\\].|[^\\"])*"|;.*|[^\s('"`,;)]*)(.*)'''
 
-    def __init__(self, value, prompt='emlisp>'):
-        self.value = value
+    def __init__(self, fileio, prompt='emlisp>'):
+        self.value = fileio
         self.line = ''
         self.prompt = prompt
         self.continuation = False
@@ -182,8 +183,12 @@ def unboxenv(env, key):
 
 def box(value):
     """ box a python native type """
+    if value is None:
+        return nil_object
     if isinstance(value, bool):
-        return Bool(value)
+        if value:
+            return true_object
+        return false_object
     elif isinstance(value, numbers.Number):
         return Numeric(value)
     elif isinstance(value, list):

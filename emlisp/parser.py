@@ -1,9 +1,12 @@
+import os
 import sys
 import logging
+import readline
 
 from emlisp import types, environment
 
 LOGGER = logging.getLogger('emlisp.parser')
+HISTORY_FILENAME = '$HOME/.emlisp-history'
 
 quotes = {"'": types.Symbol('quote'),
           '`': types.Symbol('quasiquote'),
@@ -46,11 +49,18 @@ def read(inport):
     return read_ahead(token1)
 
 
-def load(filename, env=None):
-    repl.repl(None, env, types.Inport(sys.stdin), None)
+def load(filename, env):
+    with open(filename, 'r') as f:
+        inport = types.InPort(f)
+        x = read(inport)
+        while x is not types.eof_object:
+            types.eval(x, env)
 
 
 def repl(prompt='emlisp> ', env=None, inport=None, out=sys.stdout):
+    if os.path.exists(os.path.expandvars(HISTORY_FILENAME)):
+        readline.read_history_file(os.path.expandvars(HISTORY_FILENAME))
+
     if env is None:
         env = environment.standard_environment()
 
@@ -65,6 +75,8 @@ def repl(prompt='emlisp> ', env=None, inport=None, out=sys.stdout):
             if x is types.eof_object:
                 if out:
                     print >> out, '\n'
+                readline.write_history_file(os.path.expandvars(
+                    HISTORY_FILENAME))
                 return
 
             val = types.eval(x, env)
@@ -74,7 +86,6 @@ def repl(prompt='emlisp> ', env=None, inport=None, out=sys.stdout):
 
         except Exception as e:
             print '%s: %s' % (type(e).__name__, e)
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
