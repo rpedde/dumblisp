@@ -175,10 +175,10 @@ def unbox(value):
 
 
 def unboxenv(env, key):
-    if env.get(key) is None:
-        return Nil()
+    if env.find(key) is None:
+        return nil_object
 
-    return env.get(key).value
+    return env.find(key)[key].value
 
 
 def box(value):
@@ -253,6 +253,10 @@ def eval(expr, env):
         (_, vars, exp) = expr.value
         return Lambda(vars, exp, env)
         return nil_object
+    if is_sym(expr.value[0], 'begin'):
+        for exp in expr.value[1:]:
+            retval = eval(exp, env)
+        return retval
     else:
         args = [eval(arg, env) for arg in expr.value]
         fn = args.pop(0)

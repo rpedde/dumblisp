@@ -2,6 +2,7 @@ import os
 import sys
 import logging
 import readline
+import traceback
 
 from emlisp import types, environment
 
@@ -55,14 +56,15 @@ def load(filename, env):
         x = read(inport)
         while x is not types.eof_object:
             types.eval(x, env)
+            x = read(inport)
 
 
 def repl(prompt='emlisp> ', env=None, inport=None, out=sys.stdout):
     if os.path.exists(os.path.expandvars(HISTORY_FILENAME)):
         readline.read_history_file(os.path.expandvars(HISTORY_FILENAME))
 
-    if env is None:
-        env = environment.standard_environment()
+    # if env is None:
+    #     env = environment.standard_environment()
 
     if inport is None:
         inport = types.InPort(None, prompt=prompt)
@@ -86,6 +88,8 @@ def repl(prompt='emlisp> ', env=None, inport=None, out=sys.stdout):
 
         except Exception as e:
             print '%s: %s' % (type(e).__name__, e)
+            if '*debug*' in env:
+                traceback.print_exc()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
