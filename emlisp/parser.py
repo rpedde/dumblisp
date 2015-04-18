@@ -50,13 +50,19 @@ def read(inport):
     return read_ahead(token1)
 
 
+def eval_fileio(fileio, env):
+    inport = types.InPort(fileio)
+    x = read(inport)
+    while x is not types.eof_object:
+        retval = types.eval(x, env)
+        x = read(inport)
+
+    return retval
+
+
 def load(filename, env):
     with open(filename, 'r') as f:
-        inport = types.InPort(f)
-        x = read(inport)
-        while x is not types.eof_object:
-            types.eval(x, env)
-            x = read(inport)
+        return eval_fileio(f, env)
 
 
 def repl(prompt='emlisp> ', env=None, inport=None, out=sys.stdout):
